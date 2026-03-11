@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Moon, Sun, RotateCcw, Plus, X } from 'lucide-react';
+import React, { useReducer, useState, useEffect } from 'react';
+import { Moon, Sun, RotateCcw, Plus } from 'lucide-react';
 import SpinnerWheel from './components/SpinnerWheel';
 import CurrentSpeaker from './components/CurrentSpeaker';
 import ParticipantsList from './components/ParticipantsList';
@@ -10,138 +10,184 @@ interface Participant {
   name: string;
 }
 
+interface State {
+  participants: Participant[];
+  doneParticipants: Participant[];
+  currentSpeaker: Participant | null;
+  isSpinning: boolean;
+  showCelebration: boolean;
+  spinRotation: number;
+  // Snapshot of participants at spin start so the wheel doesn't change mid-spin
+  spinningParticipants: Participant[];
+}
+
+type Action =
+  | { type: 'ADD_PARTICIPANT'; name: string }
+  | { type: 'REMOVE_PARTICIPANT'; id: string }
+  | { type: 'START_SPIN'; finalRotation: number }
+  | { type: 'FINISH_SPIN'; speaker: Participant }
+  | { type: 'MARK_DONE' }
+  | { type: 'SHOW_CELEBRATION' }
+  | { type: 'HIDE_CELEBRATION' }
+  | { type: 'RESET_ALL' };
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'ADD_PARTICIPANT':
+      if (state.participants.length >= 20) return state;
+      return {
+        ...state,
+        participants: [
+          ...state.participants,
+          { id: crypto.randomUUID(), name: action.name }
+        ]
+      };
+    case 'REMOVE_PARTICIPANT':
+      return {
+        ...state,
+        participants: state.participants.filter(p => p.id !== action.id)
+      };
+    case 'START_SPIN':
+      return {
+        ...state,
+        isSpinning: true,
+        spinningParticipants: [...state.participants],
+        spinRotation: action.finalRotation
+      };
+    case 'FINISH_SPIN':
+      return { ...state, isSpinning: false, currentSpeaker: action.speaker };
+    case 'MARK_DONE': {
+      if (!state.currentSpeaker) return state;
+      return {
+        ...state,
+        participants: state.participants.filter(p => p.id !== state.currentSpeaker!.id),
+        doneParticipants: [...state.doneParticipants, state.currentSpeaker],
+        currentSpeaker: null,
+        spinningParticipants: []
+      };
+    }
+    case 'SHOW_CELEBRATION':
+      return { ...state, showCelebration: true };
+    case 'HIDE_CELEBRATION':
+      return { ...state, showCelebration: false };
+    case 'RESET_ALL':
+      return {
+        ...state,
+        participants: [
+          ...state.participants,
+          ...state.doneParticipants,
+          ...(state.currentSpeaker ? [state.currentSpeaker] : [])
+        ],
+        doneParticipants: [],
+        currentSpeaker: null,
+        showCelebration: false,
+        spinRotation: 0,
+        spinningParticipants: [],
+        isSpinning: false
+      };
+    default:
+      return state;
+  }
+}
+
+function useLocalStorage<T>(key: string, initialValue: T) {
+  const [value, setValue] = useState<T>(() => {
+    try {
+      const item = localStorage.getItem(key);
+      return item !== null ? JSON.parse(item) : initialValue;
+    } catch {
+      return initialValue;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+
+  return [value, setValue] as const;
+}
+
+const initialState: State = {
+  participants: [],
+  doneParticipants: [],
+  currentSpeaker: null,
+  isSpinning: false,
+  showCelebration: false,
+  spinRotation: 0,
+  spinningParticipants: []
+};
+
+function loadInitialState(): State {
+  try {
+    const saved = localStorage.getItem('spinToSpeak');
+    if (saved) {
+      const data = JSON.parse(saved);
+      return { ...initialState, ...data };
+    }
+  } catch { /* ignore */ }
+  return initialState;
+}
+
 function App() {
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [doneParticipants, setDoneParticipants] = useState<Participant[]>([]);
-  const [currentSpeaker, setCurrentSpeaker] = useState<Participant | null>(null);
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [showCelebration, setShowCelebration] = useState(false);
+  const [state, dispatch] = useReducer(reducer, undefined, loadInitialState);
   const [newName, setNewName] = useState('');
-  const [darkMode, setDarkMode] = useState(false);
-  const [spinRotation, setSpinRotation] = useState(0);
-  // Keep track of participants as they were when spinning started
-  const [spinningParticipants, setSpinningParticipants] = useState<Participant[]>([]);
+  const [darkMode, setDarkMode] = useLocalStorage(
+    'spinToSpeakDarkMode',
+    window.matchMedia('(prefers-color-scheme: dark)').matches
+  );
 
-  // Load data from localStorage on mount
+  // Persist session state
   useEffect(() => {
-    const savedData = localStorage.getItem('spinToSpeak');
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      setParticipants(data.participants || []);
-      setDoneParticipants(data.doneParticipants || []);
-      setCurrentSpeaker(data.currentSpeaker || null);
-    }
+    localStorage.setItem('spinToSpeak', JSON.stringify({
+      participants: state.participants,
+      doneParticipants: state.doneParticipants,
+      currentSpeaker: state.currentSpeaker
+    }));
+  }, [state.participants, state.doneParticipants, state.currentSpeaker]);
 
-    const savedDarkMode = localStorage.getItem('spinToSpeakDarkMode');
-    if (savedDarkMode) {
-      setDarkMode(JSON.parse(savedDarkMode));
-    }
-  }, []);
-
-  // Save data to localStorage whenever state changes
-  useEffect(() => {
-    const dataToSave = {
-      participants,
-      doneParticipants,
-      currentSpeaker
-    };
-    localStorage.setItem('spinToSpeak', JSON.stringify(dataToSave));
-  }, [participants, doneParticipants, currentSpeaker]);
-
-  useEffect(() => {
-    localStorage.setItem('spinToSpeakDarkMode', JSON.stringify(darkMode));
-  }, [darkMode]);
+  const { participants, doneParticipants, currentSpeaker, isSpinning, showCelebration, spinRotation, spinningParticipants } = state;
+  const totalParticipants = participants.length + doneParticipants.length + (currentSpeaker ? 1 : 0);
+  const displayParticipants = currentSpeaker ? spinningParticipants : participants;
+  const atLimit = totalParticipants >= 20;
 
   const addParticipant = () => {
-    if (newName.trim() && !isSpinning && participants.length < 20) {
-      const newParticipant = {
-        id: Date.now().toString(),
-        name: newName.trim()
-      };
-      setParticipants([...participants, newParticipant]);
-      setNewName('');
-    }
-  };
-
-  const removeParticipant = (id: string) => {
-    if (!isSpinning) {
-      setParticipants(participants.filter(p => p.id !== id));
-    }
+    if (!newName.trim() || isSpinning || atLimit) return;
+    dispatch({ type: 'ADD_PARTICIPANT', name: newName.trim() });
+    setNewName('');
   };
 
   const spinWheel = () => {
     if (participants.length === 0 || isSpinning || currentSpeaker) return;
+    const finalRotation = spinRotation + 1800 + Math.random() * 360;
+    // Capture participants at spin time to avoid stale closure in timeout
+    const capturedParticipants = participants;
+    dispatch({ type: 'START_SPIN', finalRotation });
 
-    setIsSpinning(true);
-    // Capture the current participants for the spinner display
-    setSpinningParticipants([...participants]);
-    
-    // Calculate final rotation - multiple full spins plus random position
-    const baseRotation = 1800; // 5 full rotations
-    const randomRotation = Math.random() * 360;
-    const finalRotation = spinRotation + baseRotation + randomRotation;
-    setSpinRotation(finalRotation);
-    
-    // Wait for animation to complete, then select participant
     setTimeout(() => {
-      // Calculate which segment the pointer landed on
       const normalizedRotation = (360 - (finalRotation % 360)) % 360;
-      const segmentAngle = 360 / participants.length;
-      const selectedIndex = Math.floor(normalizedRotation / segmentAngle) % participants.length;
-      
-      const selectedParticipant = participants[selectedIndex];
-      setCurrentSpeaker(selectedParticipant);
-      // DON'T remove from participants yet - wait until marked as done
-      setIsSpinning(false);
+      const segmentAngle = 360 / capturedParticipants.length;
+      const selectedIndex = Math.floor(normalizedRotation / segmentAngle) % capturedParticipants.length;
+      dispatch({ type: 'FINISH_SPIN', speaker: capturedParticipants[selectedIndex] });
     }, 3000);
   };
 
   const markAsDone = () => {
-    if (currentSpeaker) {
-      // NOW remove the current speaker from participants and add to done
-      setParticipants(participants.filter(p => p.id !== currentSpeaker.id));
-      setDoneParticipants([...doneParticipants, currentSpeaker]);
-      setCurrentSpeaker(null);
-      // Clear the spinning participants since we're resetting
-      setSpinningParticipants([]);
-      
-      // Check if all participants are done (after removing current speaker)
-      const remainingParticipants = participants.filter(p => p.id !== currentSpeaker.id);
-      if (remainingParticipants.length === 0) {
-        setTimeout(() => setShowCelebration(true), 500);
-      }
+    if (!currentSpeaker) return;
+    const remaining = participants.filter(p => p.id !== currentSpeaker.id);
+    dispatch({ type: 'MARK_DONE' });
+    if (remaining.length === 0) {
+      setTimeout(() => dispatch({ type: 'SHOW_CELEBRATION' }), 500);
     }
   };
-
-  const resetAll = () => {
-    setParticipants([...participants, ...doneParticipants, ...(currentSpeaker ? [currentSpeaker] : [])]);
-    setDoneParticipants([]);
-    setCurrentSpeaker(null);
-    setShowCelebration(false);
-    setSpinRotation(0);
-    setSpinningParticipants([]);
-    setIsSpinning(false);
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      addParticipant();
-    }
-  };
-
-  const totalParticipants = participants.length + doneParticipants.length + (currentSpeaker ? 1 : 0);
-
-  // Determine which participants to show in the spinner
-  const displayParticipants = currentSpeaker ? spinningParticipants : participants;
 
   return (
     <div className={`min-h-screen transition-all duration-300 ${
-      darkMode 
-        ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' 
+      darkMode
+        ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900'
         : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'
     }`} style={{ fontFamily: 'Inter, sans-serif' }}>
-      {/* Header */}
       <div className="container mx-auto px-4 py-6">
+        {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" style={{ fontFamily: 'DM Serif Display, serif' }}>
@@ -151,21 +197,21 @@ function App() {
               Let the wheel decide who speaks next! ✨
             </p>
           </div>
-          
+
           <div className="flex gap-4">
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`p-3 rounded-full transition-all duration-200 hover:scale-110 ${
-                darkMode 
-                  ? 'bg-yellow-500 text-yellow-900 hover:bg-yellow-400' 
+                darkMode
+                  ? 'bg-yellow-500 text-yellow-900 hover:bg-yellow-400'
                   : 'bg-gray-700 text-yellow-400 hover:bg-gray-600'
               }`}
             >
               {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
             </button>
-            
+
             <button
-              onClick={resetAll}
+              onClick={() => dispatch({ type: 'RESET_ALL' })}
               className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-bold hover:from-orange-600 hover:to-red-600 transition-all duration-200 hover:scale-105 shadow-lg"
             >
               <RotateCcw className="w-5 h-5" />
@@ -174,7 +220,7 @@ function App() {
           </div>
         </div>
 
-        {/* Add Participant Section */}
+        {/* Add Participant */}
         <div className={`mb-8 p-6 rounded-2xl shadow-lg ${
           darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/70 backdrop-blur-sm'
         }`}>
@@ -186,46 +232,45 @@ function App() {
               type="text"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              onKeyPress={handleKeyPress}
+              onKeyDown={(e) => e.key === 'Enter' && addParticipant()}
               placeholder="Enter participant name..."
               className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${
-                darkMode 
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                darkMode
+                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
                   : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500'
               }`}
-              disabled={isSpinning || participants.length >= 20}
+              disabled={isSpinning || atLimit}
               maxLength={20}
             />
             <button
               onClick={addParticipant}
-              disabled={!newName.trim() || isSpinning || participants.length >= 20}
+              disabled={!newName.trim() || isSpinning || atLimit}
               className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg"
             >
               <Plus className="w-5 h-5" />
             </button>
           </div>
-          {participants.length >= 20 && (
+          {atLimit && (
             <p className={`text-sm mt-2 font-medium ${darkMode ? 'text-yellow-400' : 'text-orange-600'}`}>
               Maximum 20 participants reached! 🎯
             </p>
           )}
         </div>
 
-        {/* Main Content Grid */}
+        {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Spinner Section */}
           <div className="lg:col-span-2">
             <div className={`p-6 rounded-2xl shadow-lg ${
               darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/70 backdrop-blur-sm'
             }`}>
               <div className="text-center mb-6">
-                <SpinnerWheel 
-                  participants={displayParticipants} 
-                  isSpinning={isSpinning} 
+                <SpinnerWheel
+                  participants={displayParticipants}
+                  isSpinning={isSpinning}
                   darkMode={darkMode}
                   spinRotation={spinRotation}
                 />
-                
+
                 <button
                   onClick={spinWheel}
                   disabled={participants.length === 0 || isSpinning || currentSpeaker !== null}
@@ -241,18 +286,17 @@ function App() {
             </div>
           </div>
 
-          {/* Status Section */}
           <div className="space-y-6">
-            <CurrentSpeaker 
-              currentSpeaker={currentSpeaker} 
-              onMarkDone={markAsDone} 
+            <CurrentSpeaker
+              currentSpeaker={currentSpeaker}
+              onMarkDone={markAsDone}
               darkMode={darkMode}
             />
-            
-            <ParticipantsList 
+
+            <ParticipantsList
               participants={participants}
               doneParticipants={doneParticipants}
-              onRemoveParticipant={removeParticipant}
+              onRemoveParticipant={(id) => dispatch({ type: 'REMOVE_PARTICIPANT', id })}
               isSpinning={isSpinning}
               darkMode={darkMode}
             />
@@ -260,11 +304,10 @@ function App() {
         </div>
       </div>
 
-      {/* Celebration Modal */}
-      <CelebrationModal 
-        show={showCelebration} 
-        onClose={() => setShowCelebration(false)}
-        onRestart={resetAll}
+      <CelebrationModal
+        show={showCelebration}
+        onClose={() => dispatch({ type: 'HIDE_CELEBRATION' })}
+        onRestart={() => dispatch({ type: 'RESET_ALL' })}
         darkMode={darkMode}
       />
     </div>

@@ -39,7 +39,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
             No participants waiting! 🎭
           </p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
             {participants.map((participant) => (
               <div
                 key={participant.id}
@@ -89,7 +89,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
             ✅ Completed ({doneParticipants.length})
           </h3>
           
-          <div className="space-y-2">
+          <div className="space-y-2 max-h-48 overflow-y-auto">
             {doneParticipants.map((participant, index) => (
               <div
                 key={participant.id}
