@@ -304,6 +304,10 @@ function App() {
         </div>
       </div>
 
+      <footer className={`text-center py-4 text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+        made by <a href="https://github.com/btrav" className="hover:underline">btrav</a>
+      </footer>
+
       <CelebrationModal
         show={showCelebration}
         onClose={() => dispatch({ type: 'HIDE_CELEBRATION' })}
