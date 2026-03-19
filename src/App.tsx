@@ -196,15 +196,15 @@ function App() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" style={{ fontFamily: 'DM Serif Display, serif' }}>
+            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" style={{ fontFamily: 'DM Serif Display, serif' }}>
               🎡 Spin to Speak
             </h1>
-            <p className={`text-xl mt-2 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`hidden sm:block text-xl mt-2 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
               Let the wheel decide who speaks next! ✨
             </p>
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={() => setDarkMode(!darkMode)}
               className={`p-3 rounded-full transition-all duration-200 hover:scale-110 ${
@@ -212,16 +212,18 @@ function App() {
                   ? 'bg-yellow-500 text-yellow-900 hover:bg-yellow-400'
                   : 'bg-gray-700 text-yellow-400 hover:bg-gray-600'
               }`}
+              aria-label="Toggle dark mode"
             >
               {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
             </button>
 
             <button
               onClick={() => dispatch({ type: 'RESET_ALL' })}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-bold hover:from-orange-600 hover:to-red-600 transition-all duration-200 hover:scale-105 shadow-lg"
+              className="flex items-center gap-2 px-3 sm:px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-bold hover:from-orange-600 hover:to-red-600 transition-all duration-200 hover:scale-105 shadow-lg"
+              aria-label="Reset all"
             >
               <RotateCcw className="w-5 h-5" />
-              Reset All
+              <span className="hidden sm:inline">Reset All</span>
             </button>
           </div>
         </div>
@@ -247,6 +249,9 @@ function App() {
               }`}
               disabled={isSpinning || atLimit}
               maxLength={20}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="words"
             />
             <button
               onClick={addParticipant}
@@ -280,7 +285,7 @@ function App() {
                 <button
                   onClick={spinWheel}
                   disabled={participants.length === 0 || isSpinning || currentSpeaker !== null}
-                  className={`mt-8 px-12 py-4 text-xl font-bold rounded-full transition-all duration-200 shadow-lg ${
+                  className={`mt-8 px-6 sm:px-12 py-4 text-lg sm:text-xl font-bold rounded-full transition-all duration-200 shadow-lg ${
                     participants.length === 0 || isSpinning || currentSpeaker !== null
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 hover:scale-105 hover:shadow-xl animate-pulse-slow'

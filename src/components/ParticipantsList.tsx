@@ -63,9 +63,10 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
                 <button
                   onClick={() => onRemoveParticipant(participant.id)}
                   disabled={isSpinning}
-                  className={`p-2 rounded-full transition-all duration-200 hover:scale-110 ${
-                    isSpinning 
-                      ? 'opacity-50 cursor-not-allowed' 
+                  aria-label={`Remove ${participant.name}`}
+                  className={`p-2.5 rounded-full transition-all duration-200 hover:scale-110 ${
+                    isSpinning
+                      ? 'opacity-50 cursor-not-allowed'
                       : 'text-red-500 hover:bg-red-100 hover:text-red-600'
                   } ${darkMode && !isSpinning ? 'hover:bg-red-900/30' : ''}`}
                 >
