@@ -73,6 +73,7 @@ function reducer(state: State, action: Action): State {
     case 'RESET_ALL':
       return {
         ...state,
+        // Merge everyone back into the active pool: waiting + done + current speaker (if any)
         participants: [
           ...state.participants,
           ...state.doneParticipants,
@@ -147,6 +148,8 @@ function App() {
 
   const { participants, doneParticipants, currentSpeaker, isSpinning, showCelebration, spinRotation, spinningParticipants } = state;
   const totalParticipants = participants.length + doneParticipants.length + (currentSpeaker ? 1 : 0);
+  // While someone is speaking, show the frozen snapshot from spin time so the wheel
+  // doesn't visually jump if a participant is added or removed mid-turn
   const displayParticipants = currentSpeaker ? spinningParticipants : participants;
   const atLimit = totalParticipants >= 20;
 
@@ -158,17 +161,20 @@ function App() {
 
   const spinWheel = () => {
     if (participants.length === 0 || isSpinning || currentSpeaker) return;
+    // Add at least 5 full rotations (1800°) plus a random extra amount for unpredictability
     const finalRotation = spinRotation + 1800 + Math.random() * 360;
     // Capture participants at spin time to avoid stale closure in timeout
     const capturedParticipants = participants;
     dispatch({ type: 'START_SPIN', finalRotation });
 
     setTimeout(() => {
+      // Convert cumulative rotation to a 0–360 position, then invert because
+      // the wheel rotates clockwise while the pointer stays fixed at the top
       const normalizedRotation = (360 - (finalRotation % 360)) % 360;
       const segmentAngle = 360 / capturedParticipants.length;
       const selectedIndex = Math.floor(normalizedRotation / segmentAngle) % capturedParticipants.length;
       dispatch({ type: 'FINISH_SPIN', speaker: capturedParticipants[selectedIndex] });
-    }, 3000);
+    }, 3000); // matches the CSS transition duration on the wheel
   };
 
   const markAsDone = () => {

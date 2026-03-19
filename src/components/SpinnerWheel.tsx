@@ -106,10 +106,13 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
             <circle cx="160" cy="160" r="158" fill="white" stroke="#e5e7eb" strokeWidth="4" />
 
             {participants.map((participant, index) => {
+              // SVG 0° points right (3 o'clock); subtract 90° so the first segment starts at the top
               const startAngle = (index * segmentAngle - 90) * (Math.PI / 180);
               const endAngle = ((index + 1) * segmentAngle - 90) * (Math.PI / 180);
+              // SVG arc largeArcFlag must be 1 when the arc spans more than 180° (e.g. 1 or 2 participants)
               const largeArcFlag = segmentAngle > 180 ? 1 : 0;
 
+              // Arc start and end points on the wheel rim (radius 150, center 160,160)
               const x1 = 160 + 150 * Math.cos(startAngle);
               const y1 = 160 + 150 * Math.sin(startAngle);
               const x2 = 160 + 150 * Math.cos(endAngle);
@@ -117,6 +120,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
 
               const pathData = [`M 160 160`, `L ${x1} ${y1}`, `A 150 150 0 ${largeArcFlag} 1 ${x2} ${y2}`, 'Z'].join(' ');
 
+              // Place label at the angular midpoint of the segment, 100px from center
               const textAngle = startAngle + (segmentAngle * Math.PI / 180) / 2;
               const textX = 160 + 100 * Math.cos(textAngle);
               const textY = 160 + 100 * Math.sin(textAngle);
@@ -133,6 +137,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
                     fontSize="14"
                     fontWeight="600"
                     fontFamily="DM Serif Display, serif"
+                    // Rotate label to follow the segment's radial direction (convert radians → degrees)
                     transform={`rotate(${(startAngle + endAngle) * 90 / Math.PI}, ${textX}, ${textY})`}
                     style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.4))' }}
                   >
