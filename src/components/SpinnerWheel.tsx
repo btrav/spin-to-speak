@@ -112,7 +112,6 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
               // SVG arc largeArcFlag must be 1 when the arc spans more than 180° (e.g. 1 or 2 participants)
               const largeArcFlag = segmentAngle > 180 ? 1 : 0;
 
-              // Arc start and end points on the wheel rim (radius 150, center 160,160)
               const x1 = 160 + 150 * Math.cos(startAngle);
               const y1 = 160 + 150 * Math.sin(startAngle);
               const x2 = 160 + 150 * Math.cos(endAngle);
@@ -120,7 +119,6 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
 
               const pathData = [`M 160 160`, `L ${x1} ${y1}`, `A 150 150 0 ${largeArcFlag} 1 ${x2} ${y2}`, 'Z'].join(' ');
 
-              // Place label at the angular midpoint of the segment, 100px from center
               const textAngle = startAngle + (segmentAngle * Math.PI / 180) / 2;
               const textX = 160 + 100 * Math.cos(textAngle);
               const textY = 160 + 100 * Math.sin(textAngle);

@@ -73,7 +73,6 @@ function reducer(state: State, action: Action): State {
     case 'RESET_ALL':
       return {
         ...state,
-        // Merge everyone back into the active pool: waiting + done + current speaker (if any)
         participants: [
           ...state.participants,
           ...state.doneParticipants,
@@ -152,6 +151,7 @@ function App() {
   // doesn't visually jump if a participant is added or removed mid-turn
   const displayParticipants = currentSpeaker ? spinningParticipants : participants;
   const atLimit = totalParticipants >= 20;
+  const isSpinDisabled = participants.length === 0 || isSpinning || currentSpeaker !== null;
 
   const addParticipant = () => {
     if (!newName.trim() || isSpinning || atLimit) return;
@@ -284,9 +284,9 @@ function App() {
 
                 <button
                   onClick={spinWheel}
-                  disabled={participants.length === 0 || isSpinning || currentSpeaker !== null}
+                  disabled={isSpinDisabled}
                   className={`mt-8 px-6 sm:px-12 py-4 text-lg sm:text-xl font-bold rounded-full transition-all duration-200 shadow-lg ${
-                    participants.length === 0 || isSpinning || currentSpeaker !== null
+                    isSpinDisabled
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 hover:scale-105 hover:shadow-xl animate-pulse-slow'
                   }`}
