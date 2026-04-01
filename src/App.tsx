@@ -19,6 +19,13 @@ interface State {
   spinRotation: number;
   // Snapshot of participants at spin start so the wheel doesn't change mid-spin
   spinningParticipants: Participant[];
+  winnerId: string | null;
+}
+
+interface SavedRoster {
+  id: string;
+  name: string;
+  participants: Participant[];
 }
 
 type Action =
@@ -29,7 +36,8 @@ type Action =
   | { type: 'MARK_DONE' }
   | { type: 'SHOW_CELEBRATION' }
   | { type: 'HIDE_CELEBRATION' }
-  | { type: 'RESET_ALL' };
+  | { type: 'RESET_ALL' }
+  | { type: 'LOAD_ROSTER'; participants: Participant[] };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -55,7 +63,7 @@ function reducer(state: State, action: Action): State {
         spinRotation: action.finalRotation
       };
     case 'FINISH_SPIN':
-      return { ...state, isSpinning: false, currentSpeaker: action.speaker };
+      return { ...state, isSpinning: false, currentSpeaker: action.speaker, winnerId: action.speaker.id };
     case 'MARK_DONE': {
       if (!state.currentSpeaker) return state;
       return {
@@ -63,7 +71,8 @@ function reducer(state: State, action: Action): State {
         participants: state.participants.filter(p => p.id !== state.currentSpeaker!.id),
         doneParticipants: [...state.doneParticipants, state.currentSpeaker],
         currentSpeaker: null,
-        spinningParticipants: []
+        spinningParticipants: [],
+        winnerId: null
       };
     }
     case 'SHOW_CELEBRATION':
@@ -83,7 +92,19 @@ function reducer(state: State, action: Action): State {
         showCelebration: false,
         spinRotation: 0,
         spinningParticipants: [],
-        isSpinning: false
+        isSpinning: false,
+        winnerId: null
+      };
+    case 'LOAD_ROSTER':
+      return {
+        participants: action.participants,
+        doneParticipants: [],
+        currentSpeaker: null,
+        isSpinning: false,
+        showCelebration: false,
+        spinRotation: 0,
+        spinningParticipants: [],
+        winnerId: null
       };
     default:
       return state;
@@ -114,7 +135,8 @@ const initialState: State = {
   isSpinning: false,
   showCelebration: false,
   spinRotation: 0,
-  spinningParticipants: []
+  spinningParticipants: [],
+  winnerId: null
 };
 
 function loadInitialState(): State {
@@ -128,6 +150,14 @@ function loadInitialState(): State {
   return initialState;
 }
 
+const TIMER_OPTIONS = [
+  { label: 'Off', value: 0 },
+  { label: '1 min', value: 60 },
+  { label: '2 min', value: 120 },
+  { label: '3 min', value: 180 },
+  { label: '5 min', value: 300 }
+];
+
 function App() {
   const [state, dispatch] = useReducer(reducer, undefined, loadInitialState);
   const [newName, setNewName] = useState('');
@@ -135,6 +165,10 @@ function App() {
     'spinToSpeakDarkMode',
     window.matchMedia('(prefers-color-scheme: dark)').matches
   );
+  const [timerDuration, setTimerDuration] = useLocalStorage('spinToSpeakTimerDuration', 120);
+  const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
+  const [savedRosters, setSavedRosters] = useLocalStorage<SavedRoster[]>('spinToSpeakRosters', []);
+  const [rosterName, setRosterName] = useState('');
 
   // Persist session state
   useEffect(() => {
@@ -145,13 +179,43 @@ function App() {
     }));
   }, [state.participants, state.doneParticipants, state.currentSpeaker]);
 
-  const { participants, doneParticipants, currentSpeaker, isSpinning, showCelebration, spinRotation, spinningParticipants } = state;
+  // Start timer when a new speaker is selected
+  useEffect(() => {
+    if (currentSpeaker && timerDuration > 0) {
+      setTimerRemaining(timerDuration);
+    } else {
+      setTimerRemaining(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentSpeaker?.id]);
+
+  // Tick the timer down
+  useEffect(() => {
+    if (timerRemaining === null || timerRemaining <= 0) return;
+    const id = setTimeout(() => setTimerRemaining(r => r !== null ? r - 1 : null), 1000);
+    return () => clearTimeout(id);
+  }, [timerRemaining]);
+
+  const { participants, doneParticipants, currentSpeaker, isSpinning, showCelebration, spinRotation, spinningParticipants, winnerId } = state;
   const totalParticipants = participants.length + doneParticipants.length + (currentSpeaker ? 1 : 0);
   // While someone is speaking, show the frozen snapshot from spin time so the wheel
   // doesn't visually jump if a participant is added or removed mid-turn
   const displayParticipants = currentSpeaker ? spinningParticipants : participants;
   const atLimit = totalParticipants >= 20;
   const isSpinDisabled = participants.length === 0 || isSpinning || currentSpeaker !== null;
+
+  const saveRoster = () => {
+    if (!rosterName.trim() || totalParticipants === 0) return;
+    const allParticipants = [
+      ...participants,
+      ...doneParticipants,
+      ...(currentSpeaker ? [currentSpeaker] : [])
+    ];
+    setSavedRosters(prev => [...prev, { id: crypto.randomUUID(), name: rosterName.trim(), participants: allParticipants }]);
+    setRosterName('');
+  };
+
+  const deleteRoster = (id: string) => setSavedRosters(prev => prev.filter(r => r.id !== id));
 
   const addParticipant = () => {
     if (!newName.trim() || isSpinning || atLimit) return;
@@ -232,9 +296,21 @@ function App() {
         <div className={`mb-8 p-6 rounded-2xl shadow-lg ${
           darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/70 backdrop-blur-sm'
         }`}>
-          <h2 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-            🎪 Add Participants ({totalParticipants}/20)
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+              🎪 Add Participants ({totalParticipants}/20)
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>⏱</span>
+              <select
+                value={timerDuration}
+                onChange={(e) => setTimerDuration(Number(e.target.value))}
+                className={`text-sm rounded-lg px-2 py-1 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-700'}`}
+              >
+                {TIMER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+          </div>
           <div className="flex gap-3">
             <input
               type="text"
@@ -266,6 +342,57 @@ function App() {
               Maximum 20 participants reached! 🎯
             </p>
           )}
+
+          {/* Roster save row */}
+          <div className="flex gap-2 mt-3">
+            <input
+              type="text"
+              value={rosterName}
+              onChange={(e) => setRosterName(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveRoster()}
+              placeholder="Save as roster..."
+              className={`flex-1 px-3 py-2 rounded-xl border text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${
+                darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500'
+              }`}
+              maxLength={30}
+              autoComplete="off"
+            />
+            <button
+              onClick={saveRoster}
+              disabled={!rosterName.trim() || totalParticipants === 0}
+              className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl text-sm font-bold hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow"
+            >
+              Save
+            </button>
+          </div>
+
+          {/* Saved roster chips */}
+          {savedRosters.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {savedRosters.map(r => (
+                <div
+                  key={r.id}
+                  className={`flex items-center gap-1 pl-3 pr-1 py-1.5 rounded-lg text-sm font-medium ${
+                    darkMode ? 'bg-indigo-900/40 text-indigo-300' : 'bg-indigo-50 text-indigo-700'
+                  }`}
+                >
+                  <button
+                    onClick={() => dispatch({ type: 'LOAD_ROSTER', participants: r.participants })}
+                    className="hover:underline"
+                  >
+                    {r.name}
+                  </button>
+                  <button
+                    onClick={() => deleteRoster(r.id)}
+                    className={`ml-1 p-0.5 rounded hover:text-red-500 transition-colors ${darkMode ? 'text-indigo-400' : 'text-indigo-400'}`}
+                    aria-label={`Delete roster ${r.name}`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Main Content */}
@@ -280,6 +407,7 @@ function App() {
                   isSpinning={isSpinning}
                   darkMode={darkMode}
                   spinRotation={spinRotation}
+                  winnerId={winnerId}
                 />
 
                 <button
@@ -299,9 +427,12 @@ function App() {
 
           <div className="space-y-6">
             <CurrentSpeaker
+              key={currentSpeaker?.id ?? 'no-speaker'}
               currentSpeaker={currentSpeaker}
               onMarkDone={markAsDone}
               darkMode={darkMode}
+              timerRemaining={timerRemaining}
+              timerDuration={timerDuration}
             />
 
             <ParticipantsList

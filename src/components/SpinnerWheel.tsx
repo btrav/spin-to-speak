@@ -11,6 +11,7 @@ interface SpinnerWheelProps {
   isSpinning: boolean;
   darkMode: boolean;
   spinRotation: number;
+  winnerId?: string | null;
 }
 
 const colors = [
@@ -25,7 +26,7 @@ const Pointer = () => (
   </div>
 );
 
-const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _isSpinning, darkMode, spinRotation }) => {
+const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _isSpinning, darkMode, spinRotation, winnerId }) => {
   // Empty state
   if (participants.length === 0) {
     return (
@@ -124,7 +125,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
               const textY = 160 + 100 * Math.sin(textAngle);
 
               return (
-                <g key={participant.id}>
+                <g key={participant.id} className={winnerId === participant.id ? 'animate-winner-glow' : ''}>
                   <path d={pathData} fill={colors[index % colors.length]} stroke="white" strokeWidth="2" />
                   <text
                     x={textX}
