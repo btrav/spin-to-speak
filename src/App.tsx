@@ -181,13 +181,13 @@ function App() {
 
   // Start timer when a new speaker is selected
   useEffect(() => {
-    if (currentSpeaker && timerDuration > 0) {
+    if (state.currentSpeaker && timerDuration > 0) {
       setTimerRemaining(timerDuration);
     } else {
       setTimerRemaining(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSpeaker?.id]);
+  }, [state.currentSpeaker?.id]);
 
   // Tick the timer down
   useEffect(() => {
