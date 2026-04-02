@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PartyPopper, RotateCcw, X } from 'lucide-react';
+import { ThemeConfig } from '../theme';
 
 interface ConfettiPiece {
   id: number;
@@ -11,12 +12,12 @@ interface CelebrationModalProps {
   show: boolean;
   onClose: () => void;
   onRestart: () => void;
-  darkMode: boolean;
+  themeConfig: ThemeConfig;
 }
 
 const EMOJIS = ['🎉', '🎊', '✨', '🌟', '🎈', '🎁', '🥳'];
 
-const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRestart, darkMode }) => {
+const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRestart, themeConfig }) => {
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
 
   useEffect(() => {
@@ -66,13 +67,11 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRe
       ))}
 
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-        <div className={`relative max-w-md w-full p-8 rounded-3xl shadow-2xl text-center animate-bounce-in ${
-          darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white'
-        }`}>
+        <div className={`relative max-w-md w-full p-8 rounded-3xl shadow-2xl text-center animate-bounce-in ${themeConfig.modalBg}`}>
           <button
             onClick={onClose}
             className={`absolute top-4 right-4 p-2 rounded-full transition-all duration-200 hover:scale-110 ${
-              darkMode
+              themeConfig.isDark
                 ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700'
                 : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'
             }`}
@@ -85,13 +84,11 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRe
               <PartyPopper className="w-10 h-10 text-white" />
             </div>
 
-            <h2 className={`text-4xl font-bold mb-2 ${
-              darkMode ? 'text-white' : 'text-gray-800'
-            }`} style={{ fontFamily: 'DM Serif Display, serif' }}>
+            <h2 className={`text-4xl font-bold mb-2 ${themeConfig.textPrimary}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
               🎉 All Done! 🎉
             </h2>
 
-            <p className={`text-lg font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`text-lg font-semibold ${themeConfig.textSecondary}`}>
               Everyone has had their turn to speak! 🗣️✨
             </p>
           </div>
@@ -108,7 +105,7 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRe
             <button
               onClick={onClose}
               className={`w-full px-6 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 ${
-                darkMode
+                themeConfig.isDark
                   ? 'bg-gray-700 text-gray-200 hover:bg-gray-600'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}

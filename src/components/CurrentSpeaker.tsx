@@ -1,5 +1,6 @@
 import React from 'react';
 import { CheckCircle, User } from 'lucide-react';
+import { ThemeConfig } from '../theme';
 
 interface Participant {
   id: string;
@@ -9,24 +10,20 @@ interface Participant {
 interface CurrentSpeakerProps {
   currentSpeaker: Participant | null;
   onMarkDone: () => void;
-  darkMode: boolean;
+  themeConfig: ThemeConfig;
   timerRemaining: number | null;
   timerDuration: number;
 }
 
-const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkDone, darkMode, timerRemaining, timerDuration }) => {
+const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkDone, themeConfig, timerRemaining, timerDuration }) => {
   if (!currentSpeaker) {
     return (
-      <div className={`p-6 rounded-2xl shadow-lg ${
-        darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/70 backdrop-blur-sm'
-      }`}>
-        <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${
-          darkMode ? 'text-white' : 'text-gray-800'
-        }`}>
+      <div className={`p-6 rounded-2xl shadow-lg ${themeConfig.card}`}>
+        <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${themeConfig.textPrimary}`}>
           <User className="w-5 h-5" />
           🎤 Now Speaking
         </h3>
-        <div className={`text-center py-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+        <div className={`text-center py-8 ${themeConfig.textMuted}`}>
           <p className="text-lg font-bold">
             No one is speaking yet! 🤐
           </p>
@@ -37,12 +34,8 @@ const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkD
   }
 
   return (
-    <div className={`animate-slide-up-in p-6 rounded-2xl shadow-lg border-2 border-green-400 ${
-      darkMode ? 'bg-gray-800/50' : 'bg-white/70 backdrop-blur-sm'
-    }`}>
-      <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${
-        darkMode ? 'text-white' : 'text-gray-800'
-      }`}>
+    <div className={`animate-slide-up-in p-6 rounded-2xl shadow-lg ${themeConfig.cardHighlight}`}>
+      <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${themeConfig.textPrimary}`}>
         <User className="w-5 h-5 text-green-500" />
         🎤 Now Speaking
       </h3>
@@ -57,13 +50,13 @@ const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkD
           <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full animate-ping"></div>
         </div>
         
-        <h4 className={`text-xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
+        <h4 className={`text-xl font-bold mb-4 ${themeConfig.textPrimary}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
           🌟 {currentSpeaker.name}
         </h4>
 
         {timerRemaining !== null && (
           <div className="mb-4">
-            <div className={`relative h-2 rounded-full overflow-hidden ${darkMode ? 'bg-gray-700' : 'bg-gray-200'}`}>
+            <div className={`relative h-2 rounded-full overflow-hidden ${themeConfig.timerTrack}`}>
               <div
                 className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000"
                 style={{

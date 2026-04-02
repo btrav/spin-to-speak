@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, Users } from 'lucide-react';
+import { ThemeConfig } from '../theme';
 
 interface Participant {
   id: string;
@@ -9,16 +10,10 @@ interface Participant {
 interface SpinnerWheelProps {
   participants: Participant[];
   isSpinning: boolean;
-  darkMode: boolean;
+  themeConfig: ThemeConfig;
   spinRotation: number;
   winnerId?: string | null;
 }
-
-const colors = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F',
-  '#BB8FCE', '#85C1E9', '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2', '#A3E4D7',
-  '#FAD7A0', '#D5A6BD', '#AED6F1', '#A9DFBF'
-];
 
 const Pointer = () => (
   <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-4 z-20">
@@ -26,26 +21,24 @@ const Pointer = () => (
   </div>
 );
 
-const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _isSpinning, darkMode, spinRotation, winnerId }) => {
+const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _isSpinning, themeConfig, spinRotation, winnerId }) => {
   // Empty state
   if (participants.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center">
-        <div className={`w-full max-w-[320px] aspect-square rounded-full border-4 border-dashed flex flex-col items-center justify-center relative overflow-hidden ${
-          darkMode ? 'border-gray-600 bg-gray-800/30' : 'border-gray-300 bg-gradient-to-br from-blue-50 to-purple-50'
-        }`}>
+        <div className={`w-full max-w-[320px] aspect-square rounded-full border-4 border-dashed flex flex-col items-center justify-center relative overflow-hidden ${themeConfig.emptyWheelBg}`}>
           <div className="absolute inset-0">
-            <Sparkles className={`absolute top-16 left-16 w-6 h-6 animate-pulse ${darkMode ? 'text-purple-400' : 'text-purple-500'}`} style={{ animationDelay: '0s' }} />
-            <Sparkles className={`absolute top-24 right-20 w-4 h-4 animate-pulse ${darkMode ? 'text-blue-400' : 'text-blue-500'}`} style={{ animationDelay: '1s' }} />
-            <Sparkles className={`absolute bottom-20 left-24 w-5 h-5 animate-pulse ${darkMode ? 'text-pink-400' : 'text-pink-500'}`} style={{ animationDelay: '2s' }} />
-            <Sparkles className={`absolute bottom-16 right-16 w-4 h-4 animate-pulse ${darkMode ? 'text-yellow-400' : 'text-yellow-500'}`} style={{ animationDelay: '0.5s' }} />
+            <Sparkles className="absolute top-16 left-16 w-6 h-6 animate-pulse text-purple-400" style={{ animationDelay: '0s' }} />
+            <Sparkles className="absolute top-24 right-20 w-4 h-4 animate-pulse text-purple-400" style={{ animationDelay: '1s' }} />
+            <Sparkles className="absolute bottom-20 left-24 w-5 h-5 animate-pulse text-purple-400" style={{ animationDelay: '2s' }} />
+            <Sparkles className="absolute bottom-16 right-16 w-4 h-4 animate-pulse text-purple-400" style={{ animationDelay: '0.5s' }} />
           </div>
 
-          <Users className={`w-16 h-16 mb-4 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`} />
-          <p className={`text-lg font-bold text-center px-8 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+          <Users className={`w-16 h-16 mb-4 ${themeConfig.textMuted}`} />
+          <p className={`text-lg font-bold text-center px-8 ${themeConfig.textMuted}`}>
             Add some friends to get the party started! 🎉
           </p>
-          <p className={`text-sm mt-2 font-medium ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+          <p className={`text-sm mt-2 font-medium ${themeConfig.textMuted}`}>
             Up to 20 participants
           </p>
         </div>
@@ -62,7 +55,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
           <div
             className="w-full aspect-square rounded-full flex items-center justify-center shadow-2xl border-8 border-white transition-transform duration-[3000ms] ease-out"
             style={{
-              background: colors[0],
+              background: themeConfig.wheelColors[0],
               transform: `rotate(${spinRotation}deg)`
             }}
           >
@@ -81,7 +74,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
           </div>
         </div>
 
-        <p className={`mt-6 text-lg font-bold ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        <p className={`mt-6 text-lg font-bold ${themeConfig.textSecondary}`}>
           🎯 {participants.length} participant ready to spin!
         </p>
       </div>
@@ -126,7 +119,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
 
               return (
                 <g key={participant.id} className={winnerId === participant.id ? 'animate-winner-glow' : ''}>
-                  <path d={pathData} fill={colors[index % colors.length]} stroke="white" strokeWidth="2" />
+                  <path d={pathData} fill={themeConfig.wheelColors[index % themeConfig.wheelColors.length]} stroke="white" strokeWidth="2" />
                   <text
                     x={textX}
                     y={textY}
@@ -153,7 +146,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
         </div>
       </div>
 
-      <p className={`mt-6 text-lg font-bold ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+      <p className={`mt-6 text-lg font-bold ${themeConfig.textSecondary}`}>
         🎯 {participants.length} participant{participants.length !== 1 ? 's' : ''} ready to spin!
       </p>
     </div>

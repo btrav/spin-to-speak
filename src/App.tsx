@@ -1,5 +1,6 @@
 import React, { useReducer, useState, useEffect } from 'react';
-import { Moon, Sun, RotateCcw, Plus } from 'lucide-react';
+import { RotateCcw, Plus } from 'lucide-react';
+import { ThemeName, ThemeConfig, THEMES } from './theme';
 import SpinnerWheel from './components/SpinnerWheel';
 import CurrentSpeaker from './components/CurrentSpeaker';
 import ParticipantsList from './components/ParticipantsList';
@@ -161,10 +162,7 @@ const TIMER_OPTIONS = [
 function App() {
   const [state, dispatch] = useReducer(reducer, undefined, loadInitialState);
   const [newName, setNewName] = useState('');
-  const [darkMode, setDarkMode] = useLocalStorage(
-    'spinToSpeakDarkMode',
-    window.matchMedia('(prefers-color-scheme: dark)').matches
-  );
+  const [theme, setTheme] = useLocalStorage<ThemeName>('spinToSpeakTheme', 'pastel');
   const [timerDuration, setTimerDuration] = useLocalStorage('spinToSpeakTimerDuration', 120);
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
   const [savedRosters, setSavedRosters] = useLocalStorage<SavedRoster[]>('spinToSpeakRosters', []);
@@ -195,6 +193,8 @@ function App() {
     const id = setTimeout(() => setTimerRemaining(r => r !== null ? r - 1 : null), 1000);
     return () => clearTimeout(id);
   }, [timerRemaining]);
+
+  const themeConfig: ThemeConfig = THEMES[theme];
 
   const { participants, doneParticipants, currentSpeaker, isSpinning, showCelebration, spinRotation, spinningParticipants, winnerId } = state;
   const totalParticipants = participants.length + doneParticipants.length + (currentSpeaker ? 1 : 0);
@@ -251,11 +251,7 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen transition-all duration-300 ${
-      darkMode
-        ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900'
-        : 'bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'
-    }`} style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className={`min-h-screen transition-all duration-300 ${themeConfig.root}`} style={{ fontFamily: 'Inter, sans-serif' }}>
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -263,23 +259,22 @@ function App() {
             <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" style={{ fontFamily: 'DM Serif Display, serif' }}>
               🎡 Spin to Speak
             </h1>
-            <p className={`hidden sm:block text-xl mt-2 font-medium ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            <p className={`hidden sm:block text-xl mt-2 font-medium ${themeConfig.textSecondary}`}>
               Let the wheel decide who speaks next! ✨
             </p>
           </div>
 
           <div className="flex gap-3">
-            <button
-              onClick={() => setDarkMode(!darkMode)}
-              className={`p-3 rounded-full transition-all duration-200 hover:scale-110 ${
-                darkMode
-                  ? 'bg-yellow-500 text-yellow-900 hover:bg-yellow-400'
-                  : 'bg-gray-700 text-yellow-400 hover:bg-gray-600'
-              }`}
-              aria-label="Toggle dark mode"
+            <select
+              value={theme}
+              onChange={(e) => setTheme(e.target.value as ThemeName)}
+              className={`text-sm rounded-full px-3 py-2 border font-semibold transition-all duration-200 ${themeConfig.select}`}
+              aria-label="Select theme"
             >
-              {darkMode ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
-            </button>
+              {(Object.keys(THEMES) as ThemeName[]).map(t => (
+                <option key={t} value={t}>{THEMES[t].label}</option>
+              ))}
+            </select>
 
             <button
               onClick={() => dispatch({ type: 'RESET_ALL' })}
@@ -293,19 +288,17 @@ function App() {
         </div>
 
         {/* Add Participant */}
-        <div className={`mb-8 p-6 rounded-2xl shadow-lg ${
-          darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/70 backdrop-blur-sm'
-        }`}>
+        <div className={`mb-8 p-6 rounded-2xl shadow-lg ${themeConfig.card}`}>
           <div className="flex justify-between items-center mb-4">
-            <h2 className={`text-xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+            <h2 className={`text-xl font-bold ${themeConfig.textPrimary}`}>
               🎪 Add Participants ({totalParticipants}/20)
             </h2>
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>⏱</span>
+              <span className={`text-sm font-medium ${themeConfig.textMuted}`}>⏱</span>
               <select
                 value={timerDuration}
                 onChange={(e) => setTimerDuration(Number(e.target.value))}
-                className={`text-sm rounded-lg px-2 py-1 border ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-200 text-gray-700'}`}
+                className={`text-sm rounded-lg px-2 py-1 border ${themeConfig.select}`}
               >
                 {TIMER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
@@ -318,11 +311,7 @@ function App() {
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addParticipant()}
               placeholder="Enter participant name..."
-              className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${
-                darkMode
-                  ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400'
-                  : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500'
-              }`}
+              className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${themeConfig.input}`}
               disabled={isSpinning || atLimit}
               maxLength={20}
               autoComplete="off"
@@ -338,7 +327,7 @@ function App() {
             </button>
           </div>
           {atLimit && (
-            <p className={`text-sm mt-2 font-medium ${darkMode ? 'text-yellow-400' : 'text-orange-600'}`}>
+            <p className={`text-sm mt-2 font-medium ${themeConfig.isDark ? 'text-yellow-400' : 'text-orange-600'}`}>
               Maximum 20 participants reached! 🎯
             </p>
           )}
@@ -351,9 +340,7 @@ function App() {
               onChange={(e) => setRosterName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && saveRoster()}
               placeholder="Save as roster..."
-              className={`flex-1 px-3 py-2 rounded-xl border text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-200 text-gray-800 placeholder-gray-500'
-              }`}
+              className={`flex-1 px-3 py-2 rounded-xl border text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${themeConfig.input}`}
               maxLength={30}
               autoComplete="off"
             />
@@ -372,9 +359,7 @@ function App() {
               {savedRosters.map(r => (
                 <div
                   key={r.id}
-                  className={`flex items-center gap-1 pl-3 pr-1 py-1.5 rounded-lg text-sm font-medium ${
-                    darkMode ? 'bg-indigo-900/40 text-indigo-300' : 'bg-indigo-50 text-indigo-700'
-                  }`}
+                  className={`flex items-center gap-1 pl-3 pr-1 py-1.5 rounded-lg text-sm font-medium ${themeConfig.rosterChip}`}
                 >
                   <button
                     onClick={() => dispatch({ type: 'LOAD_ROSTER', participants: r.participants })}
@@ -384,7 +369,7 @@ function App() {
                   </button>
                   <button
                     onClick={() => deleteRoster(r.id)}
-                    className={`ml-1 p-0.5 rounded hover:text-red-500 transition-colors ${darkMode ? 'text-indigo-400' : 'text-indigo-400'}`}
+                    className={`ml-1 p-0.5 rounded hover:text-red-500 transition-colors ${themeConfig.rosterDelete}`}
                     aria-label={`Delete roster ${r.name}`}
                   >
                     ×
@@ -398,14 +383,12 @@ function App() {
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className={`p-6 rounded-2xl shadow-lg ${
-              darkMode ? 'bg-gray-800/50 border border-gray-700' : 'bg-white/70 backdrop-blur-sm'
-            }`}>
+            <div className={`p-6 rounded-2xl shadow-lg ${themeConfig.card}`}>
               <div className="text-center mb-6">
                 <SpinnerWheel
                   participants={displayParticipants}
                   isSpinning={isSpinning}
-                  darkMode={darkMode}
+                  themeConfig={themeConfig}
                   spinRotation={spinRotation}
                   winnerId={winnerId}
                 />
@@ -430,7 +413,7 @@ function App() {
               key={currentSpeaker?.id ?? 'no-speaker'}
               currentSpeaker={currentSpeaker}
               onMarkDone={markAsDone}
-              darkMode={darkMode}
+              themeConfig={themeConfig}
               timerRemaining={timerRemaining}
               timerDuration={timerDuration}
             />
@@ -440,13 +423,13 @@ function App() {
               doneParticipants={doneParticipants}
               onRemoveParticipant={(id) => dispatch({ type: 'REMOVE_PARTICIPANT', id })}
               isSpinning={isSpinning}
-              darkMode={darkMode}
+              themeConfig={themeConfig}
             />
           </div>
         </div>
       </div>
 
-      <footer className={`text-center py-4 text-sm ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+      <footer className={`text-center py-4 text-sm ${themeConfig.textMuted}`}>
         made by <a href="https://github.com/btrav" className="hover:underline">btrav</a>
       </footer>
 
@@ -454,7 +437,7 @@ function App() {
         show={showCelebration}
         onClose={() => dispatch({ type: 'HIDE_CELEBRATION' })}
         onRestart={() => dispatch({ type: 'RESET_ALL' })}
-        darkMode={darkMode}
+        themeConfig={themeConfig}
       />
     </div>
   );
