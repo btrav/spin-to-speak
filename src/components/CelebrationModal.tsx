@@ -96,7 +96,7 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRe
           <div className="space-y-3">
             <button
               onClick={onRestart}
-              className="w-full px-6 py-4 bg-gradient-to-r from-green-500 to-blue-500 text-white rounded-xl font-bold hover:from-green-600 hover:to-blue-600 transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+              className={`w-full px-6 py-4 rounded-xl font-bold transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2 ${themeConfig.newMeetingBtn}`}
             >
               <RotateCcw className="w-5 h-5" />
               🚀 Start New Meeting

@@ -141,7 +141,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
           </svg>
 
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white rounded-full shadow-xl border-4 border-gray-200 flex items-center justify-center z-10">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-pulse-slow" />
+            <div className={`w-10 h-10 bg-gradient-to-r ${themeConfig.wheelCenterDot} rounded-full animate-pulse-slow`} />
           </div>
         </div>
       </div>

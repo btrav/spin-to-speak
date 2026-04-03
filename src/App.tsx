@@ -1,5 +1,5 @@
 import React, { useReducer, useState, useEffect } from 'react';
-import { RotateCcw, Plus } from 'lucide-react';
+import { RotateCcw, Plus, ChevronDown } from 'lucide-react';
 import { ThemeName, ThemeConfig, THEMES } from './theme';
 import SpinnerWheel from './components/SpinnerWheel';
 import CurrentSpeaker from './components/CurrentSpeaker';
@@ -256,7 +256,7 @@ function App() {
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent" style={{ fontFamily: 'DM Serif Display, serif' }}>
+            <h1 className={`text-3xl sm:text-5xl font-bold ${themeConfig.titleClass}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
               🎡 Spin to Speak
             </h1>
             <p className={`hidden sm:block text-xl mt-2 font-medium ${themeConfig.textSecondary}`}>
@@ -265,20 +265,23 @@ function App() {
           </div>
 
           <div className="flex gap-3">
-            <select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value as ThemeName)}
-              className={`text-sm rounded-full px-3 py-2 border font-semibold transition-all duration-200 ${themeConfig.select}`}
-              aria-label="Select theme"
-            >
-              {(Object.keys(THEMES) as ThemeName[]).map(t => (
-                <option key={t} value={t}>{THEMES[t].label}</option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value as ThemeName)}
+                className={`text-sm rounded-full pl-3 pr-8 py-2 border font-semibold transition-all duration-200 appearance-none cursor-pointer ${themeConfig.select}`}
+                aria-label="Select theme"
+              >
+                {(Object.keys(THEMES) as ThemeName[]).map(t => (
+                  <option key={t} value={t}>{THEMES[t].label}</option>
+                ))}
+              </select>
+              <ChevronDown className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none ${themeConfig.textMuted}`} />
+            </div>
 
             <button
               onClick={() => dispatch({ type: 'RESET_ALL' })}
-              className="flex items-center gap-2 px-3 sm:px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full font-bold hover:from-orange-600 hover:to-red-600 transition-all duration-200 hover:scale-105 shadow-lg"
+              className={`flex items-center gap-2 px-3 sm:px-6 py-3 rounded-full font-bold transition-all duration-200 shadow-lg ${themeConfig.resetBtn}`}
               aria-label="Reset all"
             >
               <RotateCcw className="w-5 h-5" />
@@ -295,13 +298,16 @@ function App() {
             </h2>
             <div className="flex items-center gap-2">
               <span className={`text-sm font-medium ${themeConfig.textMuted}`}>⏱</span>
-              <select
-                value={timerDuration}
-                onChange={(e) => setTimerDuration(Number(e.target.value))}
-                className={`text-sm rounded-lg px-2 py-1 border ${themeConfig.select}`}
-              >
-                {TIMER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+              <div className="relative">
+                <select
+                  value={timerDuration}
+                  onChange={(e) => setTimerDuration(Number(e.target.value))}
+                  className={`text-sm rounded-lg pl-2 pr-7 py-1 border appearance-none cursor-pointer ${themeConfig.select}`}
+                >
+                  {TIMER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </select>
+                <ChevronDown className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${themeConfig.textMuted}`} />
+              </div>
             </div>
           </div>
           <div className="flex gap-3">
@@ -321,7 +327,7 @@ function App() {
             <button
               onClick={addParticipant}
               disabled={!newName.trim() || isSpinning || atLimit}
-              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow-lg"
+              className={`px-6 py-3 rounded-xl font-bold transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100 shadow-lg ${themeConfig.addBtn}`}
             >
               <Plus className="w-5 h-5" />
             </button>
@@ -347,7 +353,7 @@ function App() {
             <button
               onClick={saveRoster}
               disabled={!rosterName.trim() || totalParticipants === 0}
-              className="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl text-sm font-bold hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 shadow"
+              className={`px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100 shadow ${themeConfig.saveRosterBtn}`}
             >
               Save
             </button>
@@ -399,7 +405,7 @@ function App() {
                   className={`mt-8 px-6 sm:px-12 py-4 text-lg sm:text-xl font-bold rounded-full transition-all duration-200 shadow-lg ${
                     isSpinDisabled
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 hover:scale-105 hover:shadow-xl animate-pulse-slow'
+                      : themeConfig.spinBtnActive
                   }`}
                 >
                   {isSpinning ? '🌪️ Spinning...' : currentSpeaker ? '🎤 Someone is speaking!' : '🎯 Spin the Wheel!'}

@@ -36,18 +36,18 @@ const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkD
   return (
     <div className={`animate-slide-up-in p-6 rounded-2xl shadow-lg ${themeConfig.cardHighlight}`}>
       <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${themeConfig.textPrimary}`}>
-        <User className="w-5 h-5 text-green-500" />
+        <User className={`w-5 h-5 ${themeConfig.accentText}`} />
         🎤 Now Speaking
       </h3>
       
       <div className="text-center">
         <div className="relative inline-block">
-          <div className="w-20 h-20 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse-slow">
+          <div className={`w-20 h-20 bg-gradient-to-r ${themeConfig.speakerAvatarGradient} rounded-full flex items-center justify-center mb-4 mx-auto animate-pulse-slow`}>
             <span className="text-2xl font-bold text-white">
               {currentSpeaker.name.charAt(0).toUpperCase()}
             </span>
           </div>
-          <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full animate-ping"></div>
+          <div className={`absolute -top-1 -right-1 w-6 h-6 ${themeConfig.accentBg} rounded-full animate-ping`}></div>
         </div>
         
         <h4 className={`text-xl font-bold mb-4 ${themeConfig.textPrimary}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
@@ -75,7 +75,7 @@ const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkD
 
         <button
           onClick={onMarkDone}
-          className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transition-all duration-200 hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+          className={`w-full px-6 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${themeConfig.markDoneBtn}`}
         >
           <CheckCircle className="w-5 h-5" />
           ✅ Mark as Done

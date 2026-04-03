@@ -43,7 +43,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
                 className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${themeConfig.listItem}`}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-400 to-purple-400 rounded-full flex items-center justify-center">
+                  <div className={`w-8 h-8 bg-gradient-to-r ${themeConfig.avatarGradient} rounded-full flex items-center justify-center`}>
                     <span className="text-sm font-bold text-white">
                       {participant.name.charAt(0).toUpperCase()}
                     </span>
@@ -71,7 +71,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
       {doneParticipants.length > 0 && (
         <div className={`p-6 rounded-2xl shadow-lg ${themeConfig.card}`}>
           <h3 className={`text-lg font-bold mb-4 flex items-center gap-2 ${themeConfig.textPrimary}`}>
-            <CheckCircle className="w-5 h-5 text-green-500" />
+            <CheckCircle className={`w-5 h-5 ${themeConfig.accentText}`} />
             ✅ Completed ({doneParticipants.length})
           </h3>
           
@@ -82,7 +82,7 @@ const ParticipantsList: React.FC<ParticipantsListProps> = ({
                 className={`flex items-center gap-3 p-3 rounded-lg animate-fade-in ${themeConfig.doneItem}`}
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="w-8 h-8 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center">
+                <div className={`w-8 h-8 bg-gradient-to-r ${themeConfig.doneAvatarGradient} rounded-full flex items-center justify-center`}>
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
                 <span className={`font-semibold ${themeConfig.doneText}`}>
