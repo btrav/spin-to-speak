@@ -269,14 +269,14 @@ function App() {
               <select
                 value={theme}
                 onChange={(e) => setTheme(e.target.value as ThemeName)}
-                className={`text-sm rounded-full pl-3 pr-8 py-2 border font-semibold transition-all duration-200 appearance-none cursor-pointer ${themeConfig.select}`}
+                className={`text-sm rounded-full pl-3 pr-7 py-2 border font-semibold transition-all duration-200 appearance-none cursor-pointer ${themeConfig.select}`}
                 aria-label="Select theme"
               >
                 {(Object.keys(THEMES) as ThemeName[]).map(t => (
                   <option key={t} value={t}>{THEMES[t].label}</option>
                 ))}
               </select>
-              <ChevronDown className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none ${themeConfig.textMuted}`} />
+              <ChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none ${themeConfig.textMuted}`} />
             </div>
 
             <button
