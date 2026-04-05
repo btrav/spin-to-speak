@@ -269,7 +269,8 @@ function App() {
               <select
                 value={theme}
                 onChange={(e) => setTheme(e.target.value as ThemeName)}
-                className={`text-sm rounded-full pl-3 pr-7 py-2 border font-semibold transition-all duration-200 appearance-none cursor-pointer ${themeConfig.select}`}
+                className={`text-sm rounded-full pl-3 pr-7 py-2 border font-semibold transition-all duration-200 cursor-pointer ${themeConfig.select}`}
+                style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}
                 aria-label="Select theme"
               >
                 {(Object.keys(THEMES) as ThemeName[]).map(t => (
@@ -302,7 +303,8 @@ function App() {
                 <select
                   value={timerDuration}
                   onChange={(e) => setTimerDuration(Number(e.target.value))}
-                  className={`text-sm rounded-lg pl-2 pr-7 py-1 border appearance-none cursor-pointer ${themeConfig.select}`}
+                  className={`text-sm rounded-lg pl-2 pr-7 py-1 border cursor-pointer ${themeConfig.select}`}
+                  style={{ WebkitAppearance: 'none', MozAppearance: 'none', appearance: 'none', backgroundImage: 'none' }}
                 >
                   {TIMER_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
