@@ -266,10 +266,10 @@ function App() {
 
           <div className="flex gap-3">
             <div className="relative">
-              <div className={`text-sm rounded-full pl-3 pr-7 py-2 border font-semibold ${themeConfig.select} pointer-events-none`}>
-                {themeConfig.label}
+              <div className={`flex items-center gap-1 text-sm rounded-full pl-3 pr-2.5 py-2 border font-semibold ${themeConfig.select} pointer-events-none`}>
+                <span>{themeConfig.label}</span>
+                <ChevronDown className={`w-3.5 h-3.5 ${themeConfig.textMuted}`} />
               </div>
-              <ChevronDown className={`absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none ${themeConfig.textMuted}`} />
               <select
                 value={theme}
                 onChange={(e) => setTheme(e.target.value as ThemeName)}
@@ -301,11 +301,11 @@ function App() {
             </h2>
             <div className="flex items-center gap-2">
               <span className={`text-sm font-medium ${themeConfig.textMuted}`}>⏱</span>
-              <div className="relative">
+              <div className="relative flex items-center">
                 <div className={`text-sm rounded-lg pl-2 pr-6 py-1 border pointer-events-none ${themeConfig.select}`}>
                   {TIMER_OPTIONS.find(o => o.value === timerDuration)?.label ?? 'Off'}
                 </div>
-                <ChevronDown className={`absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none ${themeConfig.textMuted}`} />
+                <ChevronDown className={`absolute right-1.5 w-3 h-3 pointer-events-none ${themeConfig.textMuted}`} />
                 <select
                   value={timerDuration}
                   onChange={(e) => setTimerDuration(Number(e.target.value))}
