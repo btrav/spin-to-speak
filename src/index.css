@@ -2,6 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Force-remove native select arrow across all browsers */
+select.appearance-none {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: none;
+}
+select.appearance-none::-ms-expand {
+  display: none;
+}
+
 @layer utilities {
   .animate-spin-wheel {
     animation: spin-wheel 3s cubic-bezier(0.17, 0.67, 0.12, 0.99) forwards;
