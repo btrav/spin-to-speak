@@ -1,15 +1,16 @@
 # Spin to Speak
 
-A meeting facilitation tool that randomly selects participants to speak using an animated spinning wheel.
+A meeting spinner wheel that randomly selects who speaks next. Add participants, spin the wheel, and let randomness decide the order.
 
 ## Features
 
-- Add up to 20 participants
-- Spin the wheel to randomly select who speaks next
-- Mark participants as done to remove them from the rotation
-- Persists session state in localStorage so a refresh doesn't wipe your list
-- Dark mode (respects system preference by default)
+- Animated spinning wheel with winner highlight
+- Speaking timer with configurable duration
+- Save and load named rosters
+- Mark speakers as done to remove them from rotation
+- 4 visual themes: Pastel, Paper & Ink, Streak, Blue Chip
 - Celebration screen when everyone has spoken
+- Session state persists across refreshes
 
 ## Running locally
 
@@ -20,7 +21,7 @@ npm run dev
 
 ## Stack
 
-- React 18 + TypeScript
+- React + TypeScript
 - Vite
 - Tailwind CSS
 - lucide-react
