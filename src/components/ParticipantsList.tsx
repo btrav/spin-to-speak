@@ -1,11 +1,6 @@
-import React from 'react';
 import { Users, CheckCircle, X } from 'lucide-react';
 import { ThemeConfig } from '../theme';
-
-interface Participant {
-  id: string;
-  name: string;
-}
+import { Participant } from '../types';
 
 interface ParticipantsListProps {
   participants: Participant[];
@@ -15,13 +10,13 @@ interface ParticipantsListProps {
   themeConfig: ThemeConfig;
 }
 
-const ParticipantsList: React.FC<ParticipantsListProps> = ({
+const ParticipantsList = ({
   participants,
   doneParticipants,
   onRemoveParticipant,
   isSpinning,
   themeConfig
-}) => {
+}: ParticipantsListProps) => {
   return (
     <div className="space-y-6">
       {/* Remaining Participants */}

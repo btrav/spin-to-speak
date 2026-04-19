@@ -1,11 +1,6 @@
-import React from 'react';
 import { CheckCircle, User } from 'lucide-react';
 import { ThemeConfig } from '../theme';
-
-interface Participant {
-  id: string;
-  name: string;
-}
+import { Participant } from '../types';
 
 interface CurrentSpeakerProps {
   currentSpeaker: Participant | null;
@@ -15,7 +10,7 @@ interface CurrentSpeakerProps {
   timerDuration: number;
 }
 
-const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkDone, themeConfig, timerRemaining, timerDuration }) => {
+const CurrentSpeaker = ({ currentSpeaker, onMarkDone, themeConfig, timerRemaining, timerDuration }: CurrentSpeakerProps) => {
   if (!currentSpeaker) {
     return (
       <div className={`p-6 rounded-2xl shadow-lg ${themeConfig.card}`}>
@@ -50,7 +45,7 @@ const CurrentSpeaker: React.FC<CurrentSpeakerProps> = ({ currentSpeaker, onMarkD
           <div className={`absolute -top-1 -right-1 w-6 h-6 ${themeConfig.accentBg} rounded-full animate-ping`}></div>
         </div>
         
-        <h4 className={`text-xl font-bold mb-4 ${themeConfig.textPrimary}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
+        <h4 className={`text-xl font-bold font-display mb-4 ${themeConfig.textPrimary}`}>
           🌟 {currentSpeaker.name}
         </h4>
 

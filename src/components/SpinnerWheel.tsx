@@ -1,15 +1,9 @@
-import React from 'react';
 import { Sparkles, Users } from 'lucide-react';
 import { ThemeConfig } from '../theme';
-
-interface Participant {
-  id: string;
-  name: string;
-}
+import { Participant } from '../types';
 
 interface SpinnerWheelProps {
   participants: Participant[];
-  isSpinning: boolean;
   themeConfig: ThemeConfig;
   spinRotation: number;
   winnerId?: string | null;
@@ -21,7 +15,7 @@ const Pointer = () => (
   </div>
 );
 
-const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _isSpinning, themeConfig, spinRotation, winnerId }) => {
+const SpinnerWheel = ({ participants, themeConfig, spinRotation, winnerId }: SpinnerWheelProps) => {
   // Empty state
   if (participants.length === 0) {
     return (
@@ -61,10 +55,9 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
           >
             <div className="text-center px-6 max-w-[80%]">
               <span
-                className="text-white font-bold text-3xl block leading-tight"
+                className="text-white font-bold font-display text-3xl block leading-tight"
                 style={{
                   filter: 'drop-shadow(3px 3px 6px rgba(0,0,0,0.8))',
-                  fontFamily: 'DM Serif Display, serif',
                   wordBreak: 'break-word'
                 }}
               >
@@ -128,7 +121,7 @@ const SpinnerWheel: React.FC<SpinnerWheelProps> = ({ participants, isSpinning: _
                     fill="white"
                     fontSize="14"
                     fontWeight="600"
-                    fontFamily="DM Serif Display, serif"
+                    className="font-display"
                     // Rotate label to follow the segment's radial direction (convert radians → degrees)
                     transform={`rotate(${(startAngle + endAngle) * 90 / Math.PI}, ${textX}, ${textY})`}
                     style={{ filter: 'drop-shadow(1px 1px 1px rgba(0,0,0,0.4))' }}

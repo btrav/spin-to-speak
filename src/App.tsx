@@ -1,15 +1,11 @@
-import React, { useReducer, useState, useEffect } from 'react';
+import { useReducer, useState, useEffect } from 'react';
 import { RotateCcw, Plus, ChevronDown } from 'lucide-react';
 import { ThemeName, ThemeConfig, THEMES } from './theme';
+import { Participant } from './types';
 import SpinnerWheel from './components/SpinnerWheel';
 import CurrentSpeaker from './components/CurrentSpeaker';
 import ParticipantsList from './components/ParticipantsList';
 import CelebrationModal from './components/CelebrationModal';
-
-interface Participant {
-  id: string;
-  name: string;
-}
 
 interface State {
   participants: Participant[];
@@ -251,12 +247,12 @@ function App() {
   };
 
   return (
-    <div className={`min-h-screen transition-all duration-300 ${themeConfig.root}`} style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className={`min-h-screen font-sans transition-all duration-300 ${themeConfig.root}`}>
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className={`text-3xl sm:text-5xl font-bold ${themeConfig.titleClass}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
+            <h1 className={`text-3xl sm:text-5xl font-bold font-display ${themeConfig.titleClass}`}>
               🎡 Spin to Speak
             </h1>
             <p className={`hidden sm:block text-xl mt-2 font-medium ${themeConfig.textSecondary}`}>
@@ -399,7 +395,6 @@ function App() {
               <div className="text-center mb-6">
                 <SpinnerWheel
                   participants={displayParticipants}
-                  isSpinning={isSpinning}
                   themeConfig={themeConfig}
                   spinRotation={spinRotation}
                   winnerId={winnerId}

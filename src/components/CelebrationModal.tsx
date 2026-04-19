@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { PartyPopper, RotateCcw, X } from 'lucide-react';
 import { ThemeConfig } from '../theme';
 
@@ -17,7 +17,7 @@ interface CelebrationModalProps {
 
 const EMOJIS = ['🎉', '🎊', '✨', '🌟', '🎈', '🎁', '🥳'];
 
-const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRestart, themeConfig }) => {
+const CelebrationModal = ({ show, onClose, onRestart, themeConfig }: CelebrationModalProps) => {
   const [confetti, setConfetti] = useState<ConfettiPiece[]>([]);
 
   useEffect(() => {
@@ -84,7 +84,7 @@ const CelebrationModal: React.FC<CelebrationModalProps> = ({ show, onClose, onRe
               <PartyPopper className="w-10 h-10 text-white" />
             </div>
 
-            <h2 className={`text-4xl font-bold mb-2 ${themeConfig.textPrimary}`} style={{ fontFamily: 'DM Serif Display, serif' }}>
+            <h2 className={`text-4xl font-bold font-display mb-2 ${themeConfig.textPrimary}`}>
               🎉 All Done! 🎉
             </h2>
 
