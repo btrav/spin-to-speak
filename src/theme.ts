@@ -26,6 +26,7 @@ export interface ThemeConfig {
   addBtn: string;
   resetBtn: string;
   markDoneBtn: string;
+  skipBtn: string;
   newMeetingBtn: string;
   saveRosterBtn: string;
   avatarGradient: string;
@@ -63,6 +64,7 @@ export const THEMES: Record<ThemeName, ThemeConfig> = {
     addBtn: 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 hover:scale-105',
     resetBtn: 'bg-gradient-to-r from-orange-500 to-red-500 text-white hover:from-orange-600 hover:to-red-600 hover:scale-105',
     markDoneBtn: 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600 hover:scale-105',
+    skipBtn: 'bg-gray-100 text-gray-600 hover:bg-gray-200',
     newMeetingBtn: 'bg-gradient-to-r from-green-500 to-blue-500 text-white hover:from-green-600 hover:to-blue-600 hover:scale-105',
     saveRosterBtn: 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:from-indigo-600 hover:to-purple-600 hover:scale-105',
     avatarGradient: 'from-blue-400 to-purple-400',
@@ -98,6 +100,7 @@ export const THEMES: Record<ThemeName, ThemeConfig> = {
     addBtn: 'bg-gray-900 text-white hover:bg-gray-800 hover:scale-105',
     resetBtn: 'bg-red-600 text-white hover:bg-red-700 hover:scale-105',
     markDoneBtn: 'bg-gray-900 text-white hover:bg-gray-800 hover:scale-105',
+    skipBtn: 'bg-gray-100 text-gray-700 hover:bg-gray-200',
     newMeetingBtn: 'bg-gray-900 text-white hover:bg-gray-800 hover:scale-105',
     saveRosterBtn: 'bg-gray-800 text-white hover:bg-gray-700 hover:scale-105',
     avatarGradient: 'from-gray-600 to-gray-800',
@@ -133,6 +136,7 @@ export const THEMES: Record<ThemeName, ThemeConfig> = {
     addBtn: 'bg-[#1CB0F6] text-white hover:bg-[#15A0DF] hover:scale-105',
     resetBtn: 'bg-[#FF4B4B] text-white hover:bg-[#E04040] hover:scale-105',
     markDoneBtn: 'bg-[#58CC02] text-white hover:bg-[#46A302] hover:scale-105',
+    skipBtn: 'bg-gray-100 text-gray-600 hover:bg-gray-200',
     newMeetingBtn: 'bg-[#58CC02] text-white hover:bg-[#46A302] hover:scale-105',
     saveRosterBtn: 'bg-[#1CB0F6] text-white hover:bg-[#15A0DF] hover:scale-105',
     avatarGradient: 'from-[#58CC02] to-[#1CB0F6]',
@@ -168,6 +172,7 @@ export const THEMES: Record<ThemeName, ThemeConfig> = {
     addBtn: 'bg-[#0052FF] text-white hover:bg-[#003AD6] hover:scale-105',
     resetBtn: 'bg-[#1e2028] border border-[#2d3038] text-gray-200 hover:bg-[#262626] hover:scale-105',
     markDoneBtn: 'bg-[#0052FF] text-white hover:bg-[#003AD6] hover:scale-105',
+    skipBtn: 'bg-[#1e2028] text-gray-300 hover:bg-[#262626] border border-[#2d3038]',
     newMeetingBtn: 'bg-[#0052FF] text-white hover:bg-[#003AD6] hover:scale-105',
     saveRosterBtn: 'bg-[#0052FF] text-white hover:bg-[#003AD6] hover:scale-105',
     avatarGradient: 'from-[#0052FF] to-[#1A6FFF]',

@@ -1,16 +1,18 @@
-import { CheckCircle, User } from 'lucide-react';
+import { CheckCircle, User, SkipForward, Plus } from 'lucide-react';
 import { ThemeConfig } from '../theme';
 import { Participant } from '../types';
 
 interface CurrentSpeakerProps {
   currentSpeaker: Participant | null;
   onMarkDone: () => void;
+  onSkip: () => void;
+  onAddTime: () => void;
   themeConfig: ThemeConfig;
   timerRemaining: number | null;
   timerDuration: number;
 }
 
-const CurrentSpeaker = ({ currentSpeaker, onMarkDone, themeConfig, timerRemaining, timerDuration }: CurrentSpeakerProps) => {
+const CurrentSpeaker = ({ currentSpeaker, onMarkDone, onSkip, onAddTime, themeConfig, timerRemaining, timerDuration }: CurrentSpeakerProps) => {
   if (!currentSpeaker) {
     return (
       <div className={`p-6 rounded-2xl shadow-lg ${themeConfig.card}`}>
@@ -27,6 +29,11 @@ const CurrentSpeaker = ({ currentSpeaker, onMarkDone, themeConfig, timerRemainin
       </div>
     );
   }
+
+  const ratio = timerDuration > 0 && timerRemaining !== null ? timerRemaining / timerDuration : 1;
+  const timeUp = timerRemaining === 0;
+  // Non-color cue so the timer state does not rely on color alone
+  const timerLabel = timeUp ? "Time's up" : ratio <= 0.2 ? 'Wrap up soon' : null;
 
   return (
     <div className={`animate-slide-up-in p-6 rounded-2xl shadow-lg ${themeConfig.cardHighlight}`}>
@@ -50,31 +57,57 @@ const CurrentSpeaker = ({ currentSpeaker, onMarkDone, themeConfig, timerRemainin
         </h4>
 
         {timerRemaining !== null && (
-          <div className="mb-4">
+          <div className={`mb-4 ${timeUp ? 'animate-time-up' : ''}`}>
             <div className={`relative h-2 rounded-full overflow-hidden ${themeConfig.timerTrack}`}>
               <div
                 className="absolute left-0 top-0 h-full rounded-full transition-all duration-1000"
                 style={{
-                  width: `${(timerRemaining / timerDuration) * 100}%`,
-                  backgroundColor: timerRemaining / timerDuration > 0.5 ? '#22c55e' : timerRemaining / timerDuration > 0.2 ? '#eab308' : '#ef4444'
+                  width: `${ratio * 100}%`,
+                  backgroundColor: ratio > 0.5 ? '#22c55e' : ratio > 0.2 ? '#eab308' : '#ef4444'
                 }}
               />
             </div>
-            <p className={`text-center text-sm font-mono mt-1 font-bold ${
-              timerRemaining / timerDuration > 0.5 ? 'text-green-500' : timerRemaining / timerDuration > 0.2 ? 'text-yellow-500' : 'text-red-500'
-            }`}>
-              {Math.floor(timerRemaining / 60)}:{String(timerRemaining % 60).padStart(2, '0')}
-            </p>
+            <div className="flex items-center justify-center gap-2 mt-1">
+              <p className={`text-sm font-mono font-bold ${
+                ratio > 0.5 ? 'text-green-500' : ratio > 0.2 ? 'text-yellow-500' : 'text-red-500'
+              }`}>
+                {Math.floor(timerRemaining / 60)}:{String(timerRemaining % 60).padStart(2, '0')}
+              </p>
+              {timerLabel && (
+                <span className={`text-xs font-bold ${
+                  timeUp ? 'text-red-500' : 'text-yellow-600'
+                }`}>
+                  {timeUp ? '⏰' : '⏳'} {timerLabel}
+                </span>
+              )}
+              <button
+                onClick={onAddTime}
+                className={`ml-1 flex items-center gap-0.5 px-2 py-0.5 rounded-full text-xs font-bold transition-all duration-200 ${themeConfig.skipBtn}`}
+                aria-label="Add 30 seconds"
+              >
+                <Plus className="w-3 h-3" /> 30s
+              </button>
+            </div>
           </div>
         )}
 
-        <button
-          onClick={onMarkDone}
-          className={`w-full px-6 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${themeConfig.markDoneBtn}`}
-        >
-          <CheckCircle className="w-5 h-5" />
-          ✅ Mark as Done
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={onSkip}
+            className={`px-4 py-3 rounded-xl font-bold transition-all duration-200 shadow flex items-center justify-center gap-2 ${themeConfig.skipBtn}`}
+            aria-label={`Skip ${currentSpeaker.name} and return to the pool`}
+          >
+            <SkipForward className="w-5 h-5" />
+            <span className="hidden sm:inline">Skip</span>
+          </button>
+          <button
+            onClick={onMarkDone}
+            className={`flex-1 px-6 py-3 rounded-xl font-bold transition-all duration-200 shadow-lg flex items-center justify-center gap-2 ${themeConfig.markDoneBtn}`}
+          >
+            <CheckCircle className="w-5 h-5" />
+            ✅ Mark as Done
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useReducer, useState, useEffect } from 'react';
+import { useReducer, useState, useEffect, useRef, type ClipboardEvent } from 'react';
 import { RotateCcw, Plus, ChevronDown } from 'lucide-react';
 import { ThemeName, ThemeConfig, THEMES } from './theme';
 import { Participant } from './types';
@@ -27,19 +27,26 @@ interface SavedRoster {
 
 type Action =
   | { type: 'ADD_PARTICIPANT'; name: string }
+  | { type: 'ADD_PARTICIPANTS'; names: string[] }
+  | { type: 'EDIT_PARTICIPANT'; id: string; name: string }
   | { type: 'REMOVE_PARTICIPANT'; id: string }
+  | { type: 'RESTORE_PARTICIPANT'; id: string }
   | { type: 'START_SPIN'; finalRotation: number }
   | { type: 'FINISH_SPIN'; speaker: Participant }
   | { type: 'MARK_DONE' }
+  | { type: 'SKIP_SPEAKER' }
   | { type: 'SHOW_CELEBRATION' }
   | { type: 'HIDE_CELEBRATION' }
   | { type: 'RESET_ALL' }
   | { type: 'LOAD_ROSTER'; participants: Participant[] };
 
+const MAX_PARTICIPANTS = 20;
+const MAX_NAME_LENGTH = 20;
+
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'ADD_PARTICIPANT':
-      if (state.participants.length >= 20) return state;
+      if (state.participants.length >= MAX_PARTICIPANTS) return state;
       return {
         ...state,
         participants: [
@@ -47,11 +54,34 @@ function reducer(state: State, action: Action): State {
           { id: crypto.randomUUID(), name: action.name }
         ]
       };
+    case 'ADD_PARTICIPANTS': {
+      const total = state.participants.length + state.doneParticipants.length + (state.currentSpeaker ? 1 : 0);
+      const room = MAX_PARTICIPANTS - total;
+      if (room <= 0) return state;
+      const toAdd = action.names
+        .slice(0, room)
+        .map(name => ({ id: crypto.randomUUID(), name: name.slice(0, MAX_NAME_LENGTH) }));
+      return { ...state, participants: [...state.participants, ...toAdd] };
+    }
+    case 'EDIT_PARTICIPANT':
+      return {
+        ...state,
+        participants: state.participants.map(p => p.id === action.id ? { ...p, name: action.name } : p)
+      };
     case 'REMOVE_PARTICIPANT':
       return {
         ...state,
         participants: state.participants.filter(p => p.id !== action.id)
       };
+    case 'RESTORE_PARTICIPANT': {
+      const restored = state.doneParticipants.find(p => p.id === action.id);
+      if (!restored) return state;
+      return {
+        ...state,
+        doneParticipants: state.doneParticipants.filter(p => p.id !== action.id),
+        participants: [...state.participants, restored]
+      };
+    }
     case 'START_SPIN':
       return {
         ...state,
@@ -72,6 +102,16 @@ function reducer(state: State, action: Action): State {
         winnerId: null
       };
     }
+    case 'SKIP_SPEAKER':
+      if (!state.currentSpeaker) return state;
+      // The speaker was never removed from `participants`, so clearing the
+      // selection returns them to the waiting pool, available to spin again
+      return {
+        ...state,
+        currentSpeaker: null,
+        spinningParticipants: [],
+        winnerId: null
+      };
     case 'SHOW_CELEBRATION':
       return { ...state, showCelebration: true };
     case 'HIDE_CELEBRATION':
@@ -147,6 +187,43 @@ function loadInitialState(): State {
   return initialState;
 }
 
+// Two-note chime via Web Audio, no asset needed. Fired when a speaker's timer hits 0.
+// One shared context, lazily created and reused, rather than one per chime.
+let audioCtx: AudioContext | null = null;
+
+function playTimeUpChime() {
+  try {
+    if (!audioCtx) {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!Ctx) return;
+      audioCtx = new Ctx();
+    }
+    // A context can be suspended by autoplay policy until a user gesture; resume it
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const ctx = audioCtx;
+    const start = ctx.currentTime;
+    [880, 660].forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      const t = start + i * 0.2;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.3, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+      osc.start(t);
+      osc.stop(t + 0.45);
+      // Release the nodes once the note finishes so they don't pile up on the shared context
+      osc.onended = () => {
+        osc.disconnect();
+        gain.disconnect();
+      };
+    });
+  } catch { /* audio unavailable, ignore */ }
+}
+
 const TIMER_OPTIONS = [
   { label: 'Off', value: 0 },
   { label: '1 min', value: 60 },
@@ -163,6 +240,9 @@ function App() {
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
   const [savedRosters, setSavedRosters] = useLocalStorage<SavedRoster[]>('spinToSpeakRosters', []);
   const [rosterName, setRosterName] = useState('');
+  // Holds the in-flight spin's resolution timeout so we can cancel it if the
+  // roster changes (reset / load) before the wheel finishes
+  const spinTimeoutRef = useRef<number | null>(null);
 
   // Persist session state
   useEffect(() => {
@@ -190,6 +270,18 @@ function App() {
     return () => clearTimeout(id);
   }, [timerRemaining]);
 
+  // Chime once when the timer reaches 0 (only hit by ticking down, never by reset)
+  useEffect(() => {
+    if (timerRemaining === 0) playTimeUpChime();
+  }, [timerRemaining]);
+
+  // Cancel any in-flight spin timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (spinTimeoutRef.current !== null) clearTimeout(spinTimeoutRef.current);
+    };
+  }, []);
+
   const themeConfig: ThemeConfig = THEMES[theme];
 
   const { participants, doneParticipants, currentSpeaker, isSpinning, showCelebration, spinRotation, spinningParticipants, winnerId } = state;
@@ -197,7 +289,7 @@ function App() {
   // While someone is speaking, show the frozen snapshot from spin time so the wheel
   // doesn't visually jump if a participant is added or removed mid-turn
   const displayParticipants = currentSpeaker ? spinningParticipants : participants;
-  const atLimit = totalParticipants >= 20;
+  const atLimit = totalParticipants >= MAX_PARTICIPANTS;
   const isSpinDisabled = participants.length === 0 || isSpinning || currentSpeaker !== null;
 
   const saveRoster = () => {
@@ -219,6 +311,26 @@ function App() {
     setNewName('');
   };
 
+  // Paste a list (newline- or comma-separated) to add several names at once
+  const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData('text');
+    if (isSpinning || !/[\n,]/.test(text)) return;
+    e.preventDefault();
+    const names = text.split(/[\n,]+/).map(n => n.trim()).filter(Boolean);
+    if (names.length === 0) return;
+    dispatch({ type: 'ADD_PARTICIPANTS', names });
+    setNewName('');
+  };
+
+  const addTime = () => setTimerRemaining(r => (r ?? 0) + 30);
+
+  const clearPendingSpin = () => {
+    if (spinTimeoutRef.current !== null) {
+      clearTimeout(spinTimeoutRef.current);
+      spinTimeoutRef.current = null;
+    }
+  };
+
   const spinWheel = () => {
     if (participants.length === 0 || isSpinning || currentSpeaker) return;
     // Add at least 5 full rotations (1800°) plus a random extra amount for unpredictability
@@ -227,7 +339,8 @@ function App() {
     const capturedParticipants = participants;
     dispatch({ type: 'START_SPIN', finalRotation });
 
-    setTimeout(() => {
+    spinTimeoutRef.current = window.setTimeout(() => {
+      spinTimeoutRef.current = null;
       // Convert cumulative rotation to a 0–360 position, then invert because
       // the wheel rotates clockwise while the pointer stays fixed at the top
       const normalizedRotation = (360 - (finalRotation % 360)) % 360;
@@ -235,6 +348,16 @@ function App() {
       const selectedIndex = Math.floor(normalizedRotation / segmentAngle) % capturedParticipants.length;
       dispatch({ type: 'FINISH_SPIN', speaker: capturedParticipants[selectedIndex] });
     }, 3000); // matches the CSS transition duration on the wheel
+  };
+
+  const resetAll = () => {
+    clearPendingSpin();
+    dispatch({ type: 'RESET_ALL' });
+  };
+
+  const loadRoster = (rosterParticipants: Participant[]) => {
+    clearPendingSpin();
+    dispatch({ type: 'LOAD_ROSTER', participants: rosterParticipants });
   };
 
   const markAsDone = () => {
@@ -248,6 +371,14 @@ function App() {
 
   return (
     <div className={`min-h-screen font-sans transition-all duration-300 ${themeConfig.root}`}>
+      {/* Announce the selected speaker (and time-up) to screen readers */}
+      <div aria-live="polite" className="sr-only">
+        {currentSpeaker
+          ? timerRemaining === 0
+            ? `Time is up for ${currentSpeaker.name}`
+            : `${currentSpeaker.name} is now speaking`
+          : ''}
+      </div>
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -279,7 +410,7 @@ function App() {
             </div>
 
             <button
-              onClick={() => dispatch({ type: 'RESET_ALL' })}
+              onClick={resetAll}
               className={`flex items-center gap-2 px-3 sm:px-6 py-3 rounded-full font-bold transition-all duration-200 shadow-lg ${themeConfig.resetBtn}`}
               aria-label="Reset all"
             >
@@ -293,7 +424,7 @@ function App() {
         <div className={`mb-8 p-6 rounded-2xl shadow-lg ${themeConfig.card}`}>
           <div className="flex justify-between items-center mb-4">
             <h2 className={`text-xl font-bold ${themeConfig.textPrimary}`}>
-              🎪 Add Participants ({totalParticipants}/20)
+              🎪 Add Participants ({totalParticipants}/{MAX_PARTICIPANTS})
             </h2>
             <div className="flex items-center gap-2">
               <span className={`text-sm font-medium ${themeConfig.textMuted}`}>⏱</span>
@@ -318,10 +449,11 @@ function App() {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addParticipant()}
-              placeholder="Enter participant name..."
+              onPaste={handlePaste}
+              placeholder="Enter a name, or paste a list..."
               className={`flex-1 px-4 py-3 rounded-xl border-2 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium ${themeConfig.input}`}
               disabled={isSpinning || atLimit}
-              maxLength={20}
+              maxLength={MAX_NAME_LENGTH}
               autoComplete="off"
               autoCorrect="off"
               autoCapitalize="words"
@@ -370,7 +502,7 @@ function App() {
                   className={`flex items-center gap-1 pl-3 pr-1 py-1.5 rounded-lg text-sm font-medium ${themeConfig.rosterChip}`}
                 >
                   <button
-                    onClick={() => dispatch({ type: 'LOAD_ROSTER', participants: r.participants })}
+                    onClick={() => loadRoster(r.participants)}
                     className="hover:underline"
                   >
                     {r.name}
@@ -420,6 +552,8 @@ function App() {
               key={currentSpeaker?.id ?? 'no-speaker'}
               currentSpeaker={currentSpeaker}
               onMarkDone={markAsDone}
+              onSkip={() => dispatch({ type: 'SKIP_SPEAKER' })}
+              onAddTime={addTime}
               themeConfig={themeConfig}
               timerRemaining={timerRemaining}
               timerDuration={timerDuration}
@@ -429,6 +563,8 @@ function App() {
               participants={participants}
               doneParticipants={doneParticipants}
               onRemoveParticipant={(id) => dispatch({ type: 'REMOVE_PARTICIPANT', id })}
+              onEditParticipant={(id, name) => dispatch({ type: 'EDIT_PARTICIPANT', id, name })}
+              onRestoreParticipant={(id) => dispatch({ type: 'RESTORE_PARTICIPANT', id })}
               isSpinning={isSpinning}
               themeConfig={themeConfig}
             />
@@ -443,7 +579,7 @@ function App() {
       <CelebrationModal
         show={showCelebration}
         onClose={() => dispatch({ type: 'HIDE_CELEBRATION' })}
-        onRestart={() => dispatch({ type: 'RESET_ALL' })}
+        onRestart={resetAll}
         themeConfig={themeConfig}
       />
     </div>
