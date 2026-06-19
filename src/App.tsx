@@ -235,7 +235,7 @@ const TIMER_OPTIONS = [
 function App() {
   const [state, dispatch] = useReducer(reducer, undefined, loadInitialState);
   const [newName, setNewName] = useState('');
-  const [theme, setTheme] = useLocalStorage<ThemeName>('spinToSpeakTheme', 'pastel');
+  const [theme, setTheme] = useLocalStorage<ThemeName>('spinToSpeakTheme', 'blue-chip');
   const [timerDuration, setTimerDuration] = useLocalStorage('spinToSpeakTimerDuration', 120);
   const [timerRemaining, setTimerRemaining] = useState<number | null>(null);
   const [savedRosters, setSavedRosters] = useLocalStorage<SavedRoster[]>('spinToSpeakRosters', []);
